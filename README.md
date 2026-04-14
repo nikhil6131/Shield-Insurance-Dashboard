@@ -13,7 +13,7 @@ Shield Insurance approached AtliQ Technologies with a need to build a centralise
 
 This project delivers a **4-page interactive Power BI dashboard** covering **November 2022 to April 2023**, enabling Shield Insurance's leadership team to make data-driven decisions on customer acquisition, sales strategy, and risk management.
 
-> **Live Dashboard →** [View on Power BI Service](https://shorturl.at/b28I0)
+> **Live Dashboard →** [View on Power BI Service](https://shorturl.at/OPqcv)
 
 ---
 
@@ -234,7 +234,7 @@ git clone https://github.com/nikhil6131/Shield-Insurance-Dashboard.git
    - All data is pre-loaded — no additional setup required
 
 3. **Or view live**
-   - [Click here to view the live interactive dashboard](https://shorturl.at/b28I0)
+   - [Click here to view the live interactive dashboard](https://shorturl.at/OPqcv)
 
 ---
 
