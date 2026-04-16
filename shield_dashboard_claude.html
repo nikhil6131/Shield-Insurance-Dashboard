@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shield Insurance Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f0;color:#1a1a2e;font-size:13px}
+:root{--navy:#0d1b2a;--gold:#c8a951;--teal:#008b8b;--blue:#1565c0;--white:#fff;--lgray:#f5f5f0;--mgray:#6c757d}
+
+/* NAV */
+.topnav{background:var(--navy);display:flex;align-items:center;padding:0 20px;height:52px;gap:6px;position:sticky;top:0;z-index:100}
+.topnav .brand{color:var(--gold);font-weight:700;font-size:15px;margin-right:20px;letter-spacing:1px}
+.nav-btn{padding:6px 16px;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:rgba(255,255,255,0.6);letter-spacing:.5px;transition:all .2s}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,0.1)}
+.nav-btn.active{background:var(--gold);color:var(--navy)}
+.topnav .badge{margin-left:auto;background:rgba(200,169,81,0.15);border:1px solid var(--gold);color:var(--gold);padding:3px 10px;border-radius:12px;font-size:10px}
+
+/* PAGES */
+.page{display:none;padding:16px 20px;min-height:calc(100vh - 52px)}
+.page.active{display:block}
+
+/* HOME */
+.home-hero{text-align:center;padding:30px 20px 20px}
+.home-hero h1{font-size:32px;color:var(--navy);font-weight:700;letter-spacing:1px}
+.home-hero p{color:var(--mgray);font-size:14px;margin-top:6px}
+.home-divider{width:80px;height:3px;background:var(--gold);margin:12px auto}
+.home-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:24px 0}
+.home-card{background:#fff;border-radius:10px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border-top:4px solid var(--teal);text-align:center;cursor:pointer;transition:all .25s}
+.home-card:nth-child(2){border-top-color:var(--blue)}
+.home-card:nth-child(3){border-top-color:#7b1fa2}
+.home-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.home-card .icon{font-size:36px;margin-bottom:12px}
+.home-card h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px;letter-spacing:.5px}
+.home-card p{font-size:12px;color:var(--mgray);line-height:1.6}
+.home-card .btn{margin-top:16px;display:inline-block;padding:7px 20px;border-radius:20px;font-size:11px;font-weight:600;border:2px solid var(--teal);color:var(--teal);cursor:pointer;transition:all .2s}
+.home-card:nth-child(2) .btn{border-color:var(--blue);color:var(--blue)}
+.home-card:nth-child(3) .btn{border-color:#7b1fa2;color:#7b1fa2}
+.home-card:hover .btn{background:var(--teal);color:#fff}
+.home-card:nth-child(2):hover .btn{background:var(--blue);color:#fff}
+.home-card:nth-child(3):hover .btn{background:#7b1fa2;color:#fff}
+.home-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:0;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:16px}
+.home-stat{padding:14px 10px;text-align:center;border-right:1px solid #eee}
+.home-stat:last-child{border-right:none}
+.home-stat .val{font-size:18px;font-weight:700;color:var(--teal)}
+.home-stat .lbl{font-size:10px;color:var(--mgray);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.home-footer{text-align:center;color:var(--mgray);font-size:11px;padding:10px;border-top:1px solid #eee;margin-top:8px}
+
+/* FILTERS */
+.filter-bar{background:#fff;border-radius:8px;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.filter-bar label{font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:.5px}
+.filter-bar select{padding:5px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;background:#f8f8f8;color:var(--navy);cursor:pointer}
+.filter-bar select:focus{outline:none;border-color:var(--teal)}
+.reset-btn{margin-left:auto;padding:5px 14px;background:transparent;border:1px solid #ddd;border-radius:6px;font-size:11px;cursor:pointer;color:var(--mgray)}
+.reset-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border-radius:8px;padding:14px 16px;box-shadow:0 1px 6px rgba(0,0,0,0.06);border-left:4px solid var(--teal);position:relative;overflow:hidden}
+.kpi:nth-child(2){border-left-color:var(--blue)}
+.kpi:nth-child(3){border-left-color:#7b1fa2}
+.kpi:nth-child(4){border-left-color:#b7770d}
+.kpi .lbl{font-size:10px;font-weight:700;color:var(--mgray);text-transform:uppercase;letter-spacing:.8px}
+.kpi .val{font-size:26px;font-weight:700;color:var(--navy);margin:4px 0}
+.kpi .sub{font-size:11px;color:var(--mgray)}
+.kpi .chg{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-top:4px}
+.chg.up{background:#e8f5e9;color:#1e8449}
+.chg.dn{background:#fce4ec;color:#c0392b}
+
+/* CHARTS GRID */
+.charts-grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.grid-21{grid-template-columns:2fr 1fr}
+.grid-12{grid-template-columns:1fr 2fr}
+
+.chart-card{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.chart-card h3{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gold)}
+.chart-wrap{position:relative}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{background:var(--navy);color:var(--gold);padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:7px 10px;border-bottom:1px solid #f0f0f0}
+.tbl tr:hover td{background:#f8f9fa}
+.tbl tr:nth-child(even) td{background:#fafafa}
+.tbl tr:nth-child(even):hover td{background:#f0f4f8}
+
+/* SECTION TITLE */
+.sec-title{font-size:11px;font-weight:700;color:var(--mgray);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;padding-left:4px;border-left:3px solid var(--gold)}
+
+/* INSIGHT BOX */
+.insight{background:linear-gradient(135deg,#fff8e1,#fffde7);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:12px;color:#5d4037;margin-bottom:14px}
+.insight strong{color:var(--navy)}
+
+/* MODE PAGE SPECIFIC */
+.mode-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .kpi-grid,.mode-kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-2,.grid-3,.grid-21,.grid-12{grid-template-columns:1fr}
+  .home-cards{grid-template-columns:1fr}
+  .home-stats{grid-template-columns:repeat(3,1fr)}
+}
+
+/* CLAUDE BADGE */
+.claude-badge{position:fixed;bottom:16px;right:16px;background:var(--navy);color:var(--gold);padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:200}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <span class="brand">🛡️ SHIELD INSURANCE</span>
+  <button class="nav-btn active" onclick="showPage('home',this)">Home</button>
+  <button class="nav-btn" onclick="showPage('general',this)">General Analysis</button>
+  <button class="nav-btn" onclick="showPage('sales',this)">Sales Mode</button>
+  <button class="nav-btn" onclick="showPage('age',this)">Age Group</button>
+  <span class="badge">Built by Claude AI · Apr 2023 Data</span>
+</nav>
+
+<!-- ═══════════ HOME PAGE ═══════════ -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <h1>SHIELD INSURANCE ANALYTICS DASHBOARD</h1>
+    <div class="home-divider"></div>
+    <p>Select a view below to explore the data &nbsp;·&nbsp; Data Period: Nov 2022 – Apr 2023</p>
+  </div>
+
+  <div class="home-cards">
+    <div class="home-card" onclick="showPage('general',document.querySelectorAll('.nav-btn')[1])">
+      <div class="icon">📊</div>
+      <h3>GENERAL ANALYSIS</h3>
+      <p>Analyze key business metrics including total customers, total revenue, daily revenue growth, and daily customer growth. Interactive filters allow for deeper analysis by city, age group, sales mode and policy.</p>
+      <div class="btn">EXPLORE →</div>
+    </div>
+    <div class="home-card" onclick="showPage('sales',document.querySelectorAll('.nav-btn')[2])">
+      <div class="icon">🛒</div>
+      <h3>SALES MODE ANALYSIS</h3>
+      <p>Analyze the customer and revenue split percentages by overall sales method. Understand monthly trends in sales performance and how each channel contributes to overall business growth.</p>
+      <div class="btn">EXPLORE →</div>
+    </div>
+    <div class="home-card" onclick="showPage('age',document.querySelectorAll('.nav-btn')[3])">
+      <div class="icon">👥</div>
+      <h3>AGE GROUP ANALYSIS</h3>
+      <p>Analyze the age group breakdown and policy preferences of all customers. Understand expected settlement amounts, sales mode preferences by age, and customer trends over time.</p>
+      <div class="btn">EXPLORE →</div>
+    </div>
+  </div>
+
+  <div class="home-stats">
+    <div class="home-stat"><div class="val">₹989M</div><div class="lbl">Total Revenue</div></div>
+    <div class="home-stat"><div class="val">26,841</div><div class="lbl">Customers</div></div>
+    <div class="home-stat"><div class="val">6</div><div class="lbl">Months Data</div></div>
+    <div class="home-stat"><div class="val">₹606M</div><div class="lbl">Est. Settlement</div></div>
+    <div class="home-stat"><div class="val">9</div><div class="lbl">Policy Types</div></div>
+    <div class="home-stat"><div class="val">5</div><div class="lbl">Cities</div></div>
+  </div>
+
+  <div class="home-footer">Data Last Uploaded: Sunday, 30 April 2023 &nbsp;·&nbsp; Built by Claude AI (Anthropic) &nbsp;·&nbsp; AtliQ Technologies Virtual Internship</div>
+</div>
+
+<!-- ═══════════ GENERAL ANALYSIS ═══════════ -->
+<div class="page" id="page-general">
+  <div class="filter-bar">
+    <label>Month</label>
+    <select id="g-month" onchange="renderGeneral()">
+      <option value="all">All Months</option>
+      <option value="Nov_22">Nov 2022</option>
+      <option value="Dec_22">Dec 2022</option>
+      <option value="Jan_23">Jan 2023</option>
+      <option value="Feb_23">Feb 2023</option>
+      <option value="Mar_23">Mar 2023</option>
+      <option value="Apr_23">Apr 2023</option>
+    </select>
+    <label>City</label>
+    <select id="g-city" onchange="renderGeneral()">
+      <option value="all">All Cities</option>
+      <option>Chennai</option><option>Delhi NCR</option><option>Hyderabad</option><option>Indore</option><option>Mumbai</option>
+    </select>
+    <label>Sales Mode</label>
+    <select id="g-mode" onchange="renderGeneral()">
+      <option value="all">All Modes</option>
+      <option>Offline-Agent</option><option>Offline-Direct</option><option>Online-App</option><option>Online-Website</option>
+    </select>
+    <label>Age Group</label>
+    <select id="g-age" onchange="renderGeneral()">
+      <option value="all">All Ages</option>
+      <option>18-24</option><option>25-30</option><option>31-40</option><option>41-50</option><option>51-65</option><option>65+</option>
+    </select>
+    <label>Policy ID</label>
+    <select id="g-policy" onchange="renderGeneral()">
+      <option value="all">All Policies</option>
+      <option>POL1048HEL</option><option>POL2005HEL</option><option>POL3309HEL</option><option>POL4321HEL</option>
+      <option>POL4331HEL</option><option>POL5319HEL</option><option>POL6093HEL</option><option>POL6303HEL</option><option>POL9221HEL</option>
+    </select>
+    <button class="reset-btn" onclick="resetFilters('general')">Reset Filters</button>
+  </div>
+
+  <div class="kpi-grid" id="g-kpis"></div>
+
+  <div class="insight" id="g-insight"></div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:14px">
+    <div class="chart-card">
+      <h3>Revenue Split by City</h3>
+      <table class="tbl" id="g-city-table"></table>
+    </div>
+    <div class="chart-card">
+      <h3>Customer Split by Age Group</h3>
+      <table class="tbl" id="g-age-table"></table>
+    </div>
+  </div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:14px">
+    <div class="chart-card">
+      <h3>Customers Trend by Month</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="g-trend-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Customer Segmentation (City × Age Group)</h3>
+      <div style="max-height:220px;overflow-y:auto">
+        <table class="tbl" id="g-seg-table"></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">LM CHG = Last Month Change &nbsp;·&nbsp; DRG = Daily Revenue Growth &nbsp;·&nbsp; DCG = Daily Customer Growth</div>
+</div>
+
+<!-- ═══════════ SALES MODE ═══════════ -->
+<div class="page" id="page-sales">
+  <div class="filter-bar">
+    <label>Month</label>
+    <select id="s-month" onchange="renderSales()">
+      <option value="all">All Months</option>
+      <option value="Nov_22">Nov 2022</option><option value="Dec_22">Dec 2022</option>
+      <option value="Jan_23">Jan 2023</option><option value="Feb_23">Feb 2023</option>
+      <option value="Mar_23">Mar 2023</option><option value="Apr_23">Apr 2023</option>
+    </select>
+    <label>Sales Mode</label>
+    <select id="s-mode" onchange="renderSales()">
+      <option value="all">All Modes</option>
+      <option>Offline-Agent</option><option>Offline-Direct</option><option>Online-App</option><option>Online-Website</option>
+    </select>
+    <button class="reset-btn" onclick="resetFilters('sales')">Reset Filters</button>
+  </div>
+
+  <div class="kpi-grid mode-kpi-grid" id="s-kpis"></div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:14px">
+    <div class="chart-card">
+      <h3>Customer % by Sales Mode</h3>
+      <div class="chart-wrap" style="height:260px"><canvas id="s-cust-pie"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Revenue % by Sales Mode</h3>
+      <div class="chart-wrap" style="height:260px"><canvas id="s-rev-pie"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid grid-2">
+    <div class="chart-card">
+      <h3>Customer Trends by Month</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="s-cust-trend"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Revenue Trends by Month</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="s-rev-trend"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ AGE GROUP ═══════════ -->
+<div class="page" id="page-age">
+  <div class="filter-bar">
+    <label>Month</label>
+    <select id="a-month" onchange="renderAge()">
+      <option value="all">All Months</option>
+      <option value="Nov_22">Nov 2022</option><option value="Dec_22">Dec 2022</option>
+      <option value="Jan_23">Jan 2023</option><option value="Feb_23">Feb 2023</option>
+      <option value="Mar_23">Mar 2023</option><option value="Apr_23">Apr 2023</option>
+    </select>
+    <label>Policy ID</label>
+    <select id="a-policy" onchange="renderAge()">
+      <option value="all">All Policies</option>
+      <option>POL1048HEL</option><option>POL2005HEL</option><option>POL3309HEL</option><option>POL4321HEL</option>
+      <option>POL4331HEL</option><option>POL5319HEL</option><option>POL6093HEL</option><option>POL6303HEL</option><option>POL9221HEL</option>
+    </select>
+    <button class="reset-btn" onclick="resetFilters('age')">Reset Filters</button>
+  </div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)" id="a-kpis"></div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:14px">
+    <div class="chart-card">
+      <h3>Age Group vs Est. Settlement Amount</h3>
+      <table class="tbl" id="a-sett-table"></table>
+    </div>
+    <div class="chart-card">
+      <h3>Customers by Age Group</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="a-cust-bar"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid grid-2" style="margin-bottom:14px">
+    <div class="chart-card">
+      <h3>Customer Trend by Age Group</h3>
+      <div class="chart-wrap" style="height:240px"><canvas id="a-trend-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Age Group vs Sales Mode</h3>
+      <div style="overflow-x:auto">
+        <table class="tbl" id="a-mode-table"></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>Age Group vs Policy Preferences</h3>
+    <div style="overflow-x:auto">
+      <table class="tbl" id="a-policy-table"></table>
+    </div>
+  </div>
+
+  <div class="sec-title" style="margin-top:10px">EST = Estimated</div>
+</div>
+
+<div class="claude-badge">⚡ Built by Claude AI</div>
+
+<script>
+// ── DATA ──
+const D = {
+  monthly:[{mmm_yy:"Nov_22",revenue:131686758,customers:3787},{mmm_yy:"Dec_22",revenue:156318863,customers:4020},{mmm_yy:"Jan_23",revenue:141019417,customers:3919},{mmm_yy:"Feb_23",revenue:142639681,customers:3885},{mmm_yy:"Mar_23",revenue:263838382,customers:7081},{mmm_yy:"Apr_23",revenue:153749748,customers:4149}],
+  city:[{city:"Delhi NCR",revenue:401569473,customers:11007},{city:"Mumbai",revenue:239508975,customers:6432},{city:"Hyderabad",revenue:160522521,customers:4340},{city:"Chennai",revenue:106306560,customers:2966},{city:"Indore",revenue:81345320,customers:2096}],
+  age:[{age_group:"18-24",revenue:42198268,customers:1456},{age_group:"25-30",revenue:82344520,customers:2949},{age_group:"31-40",revenue:350679844,customers:9872},{age_group:"41-50",revenue:248312580,customers:6811},{age_group:"51-65",revenue:176083392,customers:3354},{age_group:"65+",revenue:89634245,customers:2399}],
+  seg:[
+    {city:"Chennai",age_group:"18-24",customers:171,revenue:3000000},{city:"Chennai",age_group:"25-30",customers:290,revenue:5000000},{city:"Chennai",age_group:"31-40",customers:1050,revenue:38000000},{city:"Chennai",age_group:"41-50",customers:820,revenue:30000000},{city:"Chennai",age_group:"51-65",customers:410,revenue:18000000},{city:"Chennai",age_group:"65+",customers:225,revenue:12000000},
+    {city:"Delhi NCR",age_group:"18-24",customers:591,revenue:8000000},{city:"Delhi NCR",age_group:"25-30",customers:1100,revenue:32000000},{city:"Delhi NCR",age_group:"31-40",customers:4100,revenue:145000000},{city:"Delhi NCR",age_group:"41-50",customers:2800,revenue:102000000},{city:"Delhi NCR",age_group:"51-65",customers:1400,revenue:68000000},{city:"Delhi NCR",age_group:"65+",customers:1016,revenue:46000000},
+    {city:"Hyderabad",age_group:"18-24",customers:237,revenue:3000000},{city:"Hyderabad",age_group:"25-30",customers:480,revenue:14000000},{city:"Hyderabad",age_group:"31-40",customers:1700,revenue:60000000},{city:"Hyderabad",age_group:"41-50",customers:1100,revenue:42000000},{city:"Hyderabad",age_group:"51-65",customers:530,revenue:24000000},{city:"Hyderabad",age_group:"65+",customers:293,revenue:17000000},
+    {city:"Indore",age_group:"18-24",customers:95,revenue:1000000},{city:"Indore",age_group:"25-30",customers:190,revenue:5000000},{city:"Indore",age_group:"31-40",customers:750,revenue:28000000},{city:"Indore",age_group:"41-50",customers:490,revenue:21000000},{city:"Indore",age_group:"51-65",customers:340,revenue:15000000},{city:"Indore",age_group:"65+",customers:231,revenue:11000000},
+    {city:"Mumbai",age_group:"18-24",customers:362,revenue:27000000},{city:"Mumbai",age_group:"25-30",customers:889,revenue:26000000},{city:"Mumbai",age_group:"31-40",customers:2272,revenue:79000000},{city:"Mumbai",age_group:"41-50",customers:1601,revenue:53000000},{city:"Mumbai",age_group:"51-65",customers:674,revenue:51000000},{city:"Mumbai",age_group:"65+",customers:634,revenue:3000000}
+  ],
+  mode:[{sales_mode:"Offline-Agent",revenue:550755607,customers:14873},{sales_mode:"Offline-Direct",revenue:152905762,customers:4256},{sales_mode:"Online-App",revenue:160966593,customers:4302},{sales_mode:"Online-Website",revenue:124624887,customers:3410}],
+  mode_monthly:[
+    {mmm_yy:"Nov_22",sales_mode:"Offline-Agent",revenue:86000000,customers:2446},{mmm_yy:"Nov_22",sales_mode:"Offline-Direct",revenue:28000000,customers:1111},{mmm_yy:"Nov_22",sales_mode:"Online-App",revenue:10000000,customers:160},{mmm_yy:"Nov_22",sales_mode:"Online-Website",revenue:7000000,customers:70},
+    {mmm_yy:"Dec_22",sales_mode:"Offline-Agent",revenue:100000000,customers:2542},{mmm_yy:"Dec_22",sales_mode:"Offline-Direct",revenue:27000000,customers:851},{mmm_yy:"Dec_22",sales_mode:"Online-App",revenue:17000000,customers:379},{mmm_yy:"Dec_22",sales_mode:"Online-Website",revenue:12000000,customers:248},
+    {mmm_yy:"Jan_23",sales_mode:"Offline-Agent",revenue:86000000,customers:2329},{mmm_yy:"Jan_23",sales_mode:"Offline-Direct",revenue:22000000,customers:686},{mmm_yy:"Jan_23",sales_mode:"Online-App",revenue:20000000,customers:557},{mmm_yy:"Jan_23",sales_mode:"Online-Website",revenue:13000000,customers:347},
+    {mmm_yy:"Feb_23",sales_mode:"Offline-Agent",revenue:77000000,customers:2100},{mmm_yy:"Feb_23",sales_mode:"Offline-Direct",revenue:16000000,customers:499},{mmm_yy:"Feb_23",sales_mode:"Online-App",revenue:27000000,customers:701},{mmm_yy:"Feb_23",sales_mode:"Online-Website",revenue:23000000,customers:585},
+    {mmm_yy:"Mar_23",sales_mode:"Offline-Agent",revenue:132000000,customers:3582},{mmm_yy:"Mar_23",sales_mode:"Offline-Direct",revenue:29000000,customers:843},{mmm_yy:"Mar_23",sales_mode:"Online-App",revenue:56000000,customers:1389},{mmm_yy:"Mar_23",sales_mode:"Online-Website",revenue:47000000,customers:1267},
+    {mmm_yy:"Apr_23",sales_mode:"Offline-Agent",revenue:70000000,customers:1874},{mmm_yy:"Apr_23",sales_mode:"Offline-Direct",revenue:9000000,customers:266},{mmm_yy:"Apr_23",sales_mode:"Online-App",revenue:40000000,customers:1116},{mmm_yy:"Apr_23",sales_mode:"Online-Website",revenue:24000000,customers:893}
+  ],
+  sett_by_age:[{age_group:"18-24",settlement_pct:37.51,est_amt:15827365},{age_group:"25-30",settlement_pct:45.68,est_amt:37607237},{age_group:"31-40",settlement_pct:53.53,est_amt:187636166},{age_group:"41-50",settlement_pct:58.92,est_amt:146368133},{age_group:"51-65",settlement_pct:69.44,est_amt:122268649},{age_group:"65+",settlement_pct:78.12,est_amt:70018814}],
+  age_mode:[
+    {age_group:"18-24",sales_mode:"Offline-Agent",customers:844},{age_group:"18-24",sales_mode:"Offline-Direct",customers:256},{age_group:"18-24",sales_mode:"Online-App",customers:201},{age_group:"18-24",sales_mode:"Online-Website",customers:155},
+    {age_group:"25-30",sales_mode:"Offline-Agent",customers:1666},{age_group:"25-30",sales_mode:"Offline-Direct",customers:532},{age_group:"25-30",sales_mode:"Online-App",customers:434},{age_group:"25-30",sales_mode:"Online-Website",customers:317},
+    {age_group:"31-40",sales_mode:"Offline-Agent",customers:5370},{age_group:"31-40",sales_mode:"Offline-Direct",customers:1497},{age_group:"31-40",sales_mode:"Online-App",customers:1634},{age_group:"31-40",sales_mode:"Online-Website",customers:1371},
+    {age_group:"41-50",sales_mode:"Offline-Agent",customers:3783},{age_group:"41-50",sales_mode:"Offline-Direct",customers:1044},{age_group:"41-50",sales_mode:"Online-App",customers:1080},{age_group:"41-50",sales_mode:"Online-Website",customers:904},
+    {age_group:"51-65",sales_mode:"Offline-Agent",customers:1881},{age_group:"51-65",sales_mode:"Offline-Direct",customers:536},{age_group:"51-65",sales_mode:"Online-App",customers:530},{age_group:"51-65",sales_mode:"Online-Website",customers:407},
+    {age_group:"65+",sales_mode:"Offline-Agent",customers:1329},{age_group:"65+",sales_mode:"Offline-Direct",customers:391},{age_group:"65+",sales_mode:"Online-App",customers:423},{age_group:"65+",sales_mode:"Online-Website",customers:256}
+  ],
+  age_policy:[
+    {age_group:"18-24",policy_id:"POL1048HEL",customers:26},{age_group:"18-24",policy_id:"POL2005HEL",customers:23},{age_group:"18-24",policy_id:"POL3309HEL",customers:172},{age_group:"18-24",policy_id:"POL4321HEL",customers:678},{age_group:"18-24",policy_id:"POL4331HEL",customers:303},{age_group:"18-24",policy_id:"POL5319HEL",customers:77},{age_group:"18-24",policy_id:"POL6093HEL",customers:57},{age_group:"18-24",policy_id:"POL6303HEL",customers:71},{age_group:"18-24",policy_id:"POL9221HEL",customers:49},
+    {age_group:"25-30",policy_id:"POL1048HEL",customers:80},{age_group:"25-30",policy_id:"POL2005HEL",customers:67},{age_group:"25-30",policy_id:"POL3309HEL",customers:411},{age_group:"25-30",policy_id:"POL4321HEL",customers:1116},{age_group:"25-30",policy_id:"POL4331HEL",customers:595},{age_group:"25-30",policy_id:"POL5319HEL",customers:219},{age_group:"25-30",policy_id:"POL6093HEL",customers:166},{age_group:"25-30",policy_id:"POL6303HEL",customers:196},{age_group:"25-30",policy_id:"POL9221HEL",customers:99},
+    {age_group:"31-40",policy_id:"POL1048HEL",customers:541},{age_group:"31-40",policy_id:"POL2005HEL",customers:450},{age_group:"31-40",policy_id:"POL3309HEL",customers:1717},{age_group:"31-40",policy_id:"POL4321HEL",customers:1573},{age_group:"31-40",policy_id:"POL4331HEL",customers:1586},{age_group:"31-40",policy_id:"POL5319HEL",customers:1316},{age_group:"31-40",policy_id:"POL6093HEL",customers:887},{age_group:"31-40",policy_id:"POL6303HEL",customers:1092},{age_group:"31-40",policy_id:"POL9221HEL",customers:710},
+    {age_group:"41-50",policy_id:"POL1048HEL",customers:412},{age_group:"41-50",policy_id:"POL2005HEL",customers:410},{age_group:"41-50",policy_id:"POL3309HEL",customers:1014},{age_group:"41-50",policy_id:"POL4321HEL",customers:675},{age_group:"41-50",policy_id:"POL4331HEL",customers:827},{age_group:"41-50",policy_id:"POL5319HEL",customers:1038},{age_group:"41-50",policy_id:"POL6093HEL",customers:783},{age_group:"41-50",policy_id:"POL6303HEL",customers:987},{age_group:"41-50",policy_id:"POL9221HEL",customers:665},
+    {age_group:"51-65",policy_id:"POL1048HEL",customers:278},{age_group:"51-65",policy_id:"POL2005HEL",customers:377},{age_group:"51-65",policy_id:"POL3309HEL",customers:354},{age_group:"51-65",policy_id:"POL4321HEL",customers:267},{age_group:"51-65",policy_id:"POL4331HEL",customers:263},{age_group:"51-65",policy_id:"POL5319HEL",customers:475},{age_group:"51-65",policy_id:"POL6093HEL",customers:406},{age_group:"51-65",policy_id:"POL6303HEL",customers:468},{age_group:"51-65",policy_id:"POL9221HEL",customers:466},
+    {age_group:"65+",policy_id:"POL1048HEL",customers:331},{age_group:"65+",policy_id:"POL2005HEL",customers:641},{age_group:"65+",policy_id:"POL3309HEL",customers:161},{age_group:"65+",policy_id:"POL4321HEL",customers:125},{age_group:"65+",policy_id:"POL4331HEL",customers:161},{age_group:"65+",policy_id:"POL5319HEL",customers:204},{age_group:"65+",policy_id:"POL6093HEL",customers:244},{age_group:"65+",policy_id:"POL6303HEL",customers:203},{age_group:"65+",policy_id:"POL9221HEL",customers:329}
+  ],
+  age_monthly:[
+    {mmm_yy:"Nov_22",age_group:"18-24",customers:241},{mmm_yy:"Nov_22",age_group:"25-30",customers:476},{mmm_yy:"Nov_22",age_group:"31-40",customers:1544},{mmm_yy:"Nov_22",age_group:"41-50",customers:945},{mmm_yy:"Nov_22",age_group:"51-65",customers:367},{mmm_yy:"Nov_22",age_group:"65+",customers:214},
+    {mmm_yy:"Dec_22",age_group:"18-24",customers:264},{mmm_yy:"Dec_22",age_group:"25-30",customers:517},{mmm_yy:"Dec_22",age_group:"31-40",customers:1721},{mmm_yy:"Dec_22",age_group:"41-50",customers:958},{mmm_yy:"Dec_22",age_group:"51-65",customers:349},{mmm_yy:"Dec_22",age_group:"65+",customers:211},
+    {mmm_yy:"Jan_23",age_group:"18-24",customers:248},{mmm_yy:"Jan_23",age_group:"25-30",customers:489},{mmm_yy:"Jan_23",age_group:"31-40",customers:1680},{mmm_yy:"Jan_23",age_group:"41-50",customers:955},{mmm_yy:"Jan_23",age_group:"51-65",customers:331},{mmm_yy:"Jan_23",age_group:"65+",customers:216},
+    {mmm_yy:"Feb_23",age_group:"18-24",customers:241},{mmm_yy:"Feb_23",age_group:"25-30",customers:479},{mmm_yy:"Feb_23",age_group:"31-40",customers:1667},{mmm_yy:"Feb_23",age_group:"41-50",customers:949},{mmm_yy:"Feb_23",age_group:"51-65",customers:332},{mmm_yy:"Feb_23",age_group:"65+",customers:217},
+    {mmm_yy:"Mar_23",age_group:"18-24",customers:462},{mmm_yy:"Mar_23",age_group:"25-30",customers:939},{mmm_yy:"Mar_23",age_group:"31-40",customers:3220},{mmm_yy:"Mar_23",age_group:"41-50",customers:1787},{mmm_yy:"Mar_23",age_group:"51-65",customers:674},{mmm_yy:"Mar_23",age_group:"65+",customers:399},  // removed extra comma
+    {mmm_yy:"Apr_23",age_group:"18-24",customers:307},{mmm_yy:"Apr_23",age_group:"25-30",customers:611},{mmm_yy:"Apr_23",age_group:"31-40",customers:1759},{mmm_yy:"Apr_23",age_group:"41-50",customers:1059},{mmm_yy:"Apr_23",age_group:"51-65",customers:459},{mmm_yy:"Apr_23",age_group:"65+",customers:254}
+  ]
+};
+
+const MONTHS = ["Nov_22","Dec_22","Jan_23","Feb_23","Mar_23","Apr_23"];
+const MONTH_LABELS = ["Nov 22","Dec 22","Jan 23","Feb 23","Mar 23","Apr 23"];
+const AGE_GROUPS = ["18-24","25-30","31-40","41-50","51-65","65+"];
+const MODES = ["Offline-Agent","Offline-Direct","Online-App","Online-Website"];
+const COLORS = ["#1565c0","#1d9e75","#d85a30","#ba7517","#534ab7","#993556"];
+const MODE_COLORS = ["#008b8b","#1565c0","#d85a30","#ba7517"];
+
+const charts = {};
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function fmt(n){return n>=1e7?(n/1e7).toFixed(1)+'Cr':n>=1e5?(n/1e5).toFixed(1)+'L':n>=1e3?(n/1e3).toFixed(0)+'K':n}
+function fmtFull(n){return '₹'+n.toLocaleString('en-IN')}
+function pct(a,b){return b>0?(a/b*100).toFixed(1)+'%':'0%'}
+
+// ── PAGE NAVIGATION ──
+function showPage(p, btn){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(p==='general') renderGeneral();
+  if(p==='sales') renderSales();
+  if(p==='age') renderAge();
+}
+
+function resetFilters(p){
+  if(p==='general'){['g-month','g-city','g-mode','g-age','g-policy'].forEach(id=>{document.getElementById(id).value='all'});}
+  if(p==='sales'){['s-month','s-mode'].forEach(id=>{document.getElementById(id).value='all'});}
+  if(p==='age'){['a-month','a-policy'].forEach(id=>{document.getElementById(id).value='all'});}
+  if(p==='general') renderGeneral();
+  if(p==='sales') renderSales();
+  if(p==='age') renderAge();
+}
+
+// ══════════════ GENERAL ══════════════
+function renderGeneral(){
+  const mf=document.getElementById('g-month').value;
+  const cf=document.getElementById('g-city').value;
+  const sf=document.getElementById('g-mode').value;
+  const af=document.getElementById('g-age').value;
+
+  // Filter monthly data
+  let months = mf==='all'?MONTHS:[mf];
+  let totalRev=0, totalCust=0;
+  months.forEach(m=>{
+    const mo=D.monthly.find(x=>x.mmm_yy===m);
+    if(mo){totalRev+=mo.revenue;totalCust+=mo.customers;}
+  });
+
+  // City filter
+  let cityData = D.city.map(c=>({...c}));
+  if(cf!=='all') cityData=cityData.filter(c=>c.city===cf);
+
+  // Age filter
+  let ageData = D.age.map(a=>({...a}));
+  if(af!=='all') ageData=ageData.filter(a=>a.age_group===af);
+
+  // LM calc
+  const monthIdx = MONTHS.indexOf(mf);
+  let lmRevPct=null, lmCustPct=null;
+  if(mf!=='all' && monthIdx>0){
+    const cur=D.monthly[monthIdx], prev=D.monthly[monthIdx-1];
+    lmRevPct=((cur.revenue-prev.revenue)/prev.revenue*100).toFixed(1);
+    lmCustPct=((cur.customers-prev.customers)/prev.customers*100).toFixed(1);
+  }
+
+  const dailyRev = Math.round(totalRev/181);
+  const dailyCust = Math.round(totalCust/181);
+
+  // KPIs
+  document.getElementById('g-kpis').innerHTML=`
+    <div class="kpi"><div class="lbl">Total Revenue</div><div class="val">₹${fmt(totalRev)}</div><div class="sub">All selected months</div>${lmRevPct!==null?`<span class="chg ${parseFloat(lmRevPct)>=0?'up':'dn'}">${parseFloat(lmRevPct)>=0?'▲':'▼'} ${Math.abs(lmRevPct)}% vs Last Month</span>`:'<span class="chg up">LM: Select a month</span>'}</div>
+    <div class="kpi"><div class="lbl">Total Customers</div><div class="val">${totalCust.toLocaleString()}</div><div class="sub">Unique policyholders</div>${lmCustPct!==null?`<span class="chg ${parseFloat(lmCustPct)>=0?'up':'dn'}">${parseFloat(lmCustPct)>=0?'▲':'▼'} ${Math.abs(lmCustPct)}% vs Last Month</span>`:'<span class="chg up">LM: Select a month</span>'}</div>
+    <div class="kpi"><div class="lbl">Daily Revenue Growth</div><div class="val">₹${fmt(dailyRev)}</div><div class="sub">Avg revenue per day</div><span class="chg up">Across ${months.length*30} days</span></div>
+    <div class="kpi"><div class="lbl">Daily Customer Growth</div><div class="val">${dailyCust}</div><div class="sub">Avg new customers/day</div><span class="chg up">Across period</span></div>
+  `;
+
+  // Insight
+  const topCity=D.city[0];
+  document.getElementById('g-insight').innerHTML=`⭐ <strong>Key Insight:</strong> ${topCity.city} leads with ₹${fmt(topCity.revenue)} revenue (${pct(topCity.revenue,989252849)} of total) · March 2023 was the peak month at ₹264M — 84.97% above February · 31-40 age group is the largest segment at 9,872 customers`;
+
+  // City table
+  const totalRevAll=D.city.reduce((a,b)=>a+b.revenue,0);
+  document.getElementById('g-city-table').innerHTML=`
+    <thead><tr><th>City</th><th>Total Customers</th><th>Total Revenue</th><th>% Share</th></tr></thead>
+    <tbody>${cityData.map(c=>`<tr><td><strong>${c.city}</strong></td><td>${c.customers.toLocaleString()}</td><td>${fmtFull(c.revenue)}</td><td>${pct(c.revenue,totalRevAll)}</td></tr>`).join('')}<tr style="font-weight:700"><td>Total</td><td>${cityData.reduce((a,b)=>a+b.customers,0).toLocaleString()}</td><td>${fmtFull(cityData.reduce((a,b)=>a+b.revenue,0))}</td><td>100%</td></tr></tbody>
+  `;
+
+  // Age table
+  const totalRevAge=D.age.reduce((a,b)=>a+b.revenue,0);
+  document.getElementById('g-age-table').innerHTML=`
+    <thead><tr><th>Age Group</th><th>Total Customers</th><th>Total Revenue</th><th>% Share</th></tr></thead>
+    <tbody>${ageData.map(a=>`<tr><td><strong>${a.age_group}</strong></td><td>${a.customers.toLocaleString()}</td><td>${fmtFull(a.revenue)}</td><td>${pct(a.revenue,totalRevAge)}</td></tr>`).join('')}<tr style="font-weight:700"><td>Total</td><td>${ageData.reduce((a,b)=>a+b.customers,0).toLocaleString()}</td><td>${fmtFull(ageData.reduce((a,b)=>a+b.revenue,0))}</td><td>100%</td></tr></tbody>
+  `;
+
+  // Trend chart
+  dc('gTrend');
+  charts['gTrend']=new Chart(document.getElementById('g-trend-chart'),{
+    type:'line',
+    data:{labels:MONTH_LABELS,datasets:[{label:'Customers',data:D.monthly.map(m=>m.customers),borderColor:'#008b8b',backgroundColor:'rgba(0,139,139,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#008b8b',pointRadius:5,pointHoverRadius:7}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'}}}}
+  });
+
+  // Segmentation table
+  let segData=D.seg;
+  if(cf!=='all') segData=segData.filter(s=>s.city===cf);
+  if(af!=='all') segData=segData.filter(s=>s.age_group===af);
+  document.getElementById('g-seg-table').innerHTML=`
+    <thead><tr><th>City</th><th>Age Group</th><th>Customers</th><th>Revenue</th></tr></thead>
+    <tbody>${segData.map(s=>`<tr><td>${s.city}</td><td>${s.age_group}</td><td>${s.customers.toLocaleString()}</td><td>₹${fmt(s.revenue)}</td></tr>`).join('')}</tbody>
+  `;
+}
+
+// ══════════════ SALES MODE ══════════════
+function renderSales(){
+  const mf=document.getElementById('s-month').value;
+  const sf=document.getElementById('s-mode').value;
+
+  let modeData=D.mode.map(m=>({...m}));
+  if(sf!=='all') modeData=modeData.filter(m=>m.sales_mode===sf);
+
+  // If month filtered
+  if(mf!=='all'){
+    modeData=MODES.filter(m=>sf==='all'||m===sf).map(mode=>{
+      const mm=D.mode_monthly.find(x=>x.mmm_yy===mf&&x.sales_mode===mode)||{revenue:0,customers:0};
+      return {sales_mode:mode,revenue:mm.revenue,customers:mm.customers};
+    });
+  }
+
+  const totalRev=modeData.reduce((a,b)=>a+b.revenue,0);
+  const totalCust=modeData.reduce((a,b)=>a+b.customers,0);
+  const offlineRev=modeData.filter(m=>m.sales_mode.startsWith('Offline')).reduce((a,b)=>a+b.revenue,0);
+  const onlineRev=modeData.filter(m=>m.sales_mode.startsWith('Online')).reduce((a,b)=>a+b.revenue,0);
+
+  document.getElementById('s-kpis').innerHTML=`
+    <div class="kpi"><div class="lbl">Total Revenue</div><div class="val">₹${fmt(totalRev)}</div><div class="sub">All modes</div></div>
+    <div class="kpi"><div class="lbl">Total Customers</div><div class="val">${totalCust.toLocaleString()}</div><div class="sub">All modes</div></div>
+    <div class="kpi"><div class="lbl">Total Offline Sales</div><div class="val">₹${fmt(offlineRev)}</div><div class="sub">Agent + Direct</div></div>
+    <div class="kpi"><div class="lbl">Total Online Sales</div><div class="val">₹${fmt(onlineRev)}</div><div class="sub">App + Website</div></div>
+  `;
+
+  const labels=modeData.map(m=>m.sales_mode);
+  const revVals=modeData.map(m=>m.revenue);
+  const custVals=modeData.map(m=>m.customers);
+
+  dc('sCustPie');
+  charts['sCustPie']=new Chart(document.getElementById('s-cust-pie'),{
+    type:'pie',
+    data:{labels:labels.map((l,i)=>l+' '+pct(custVals[i],totalCust)),datasets:[{data:custVals,backgroundColor:MODE_COLORS,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:8}}}}
+  });
+
+  dc('sRevPie');
+  charts['sRevPie']=new Chart(document.getElementById('s-rev-pie'),{
+    type:'pie',
+    data:{labels:labels.map((l,i)=>l+' '+pct(revVals[i],totalRev)),datasets:[{data:revVals,backgroundColor:MODE_COLORS,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:8}}}}
+  });
+
+  // Monthly trends
+  const filteredModes=sf==='all'?MODES:[sf];
+  const custDatasets=filteredModes.map((mode,i)=>({
+    label:mode,
+    data:MONTHS.map(m=>{const r=D.mode_monthly.find(x=>x.mmm_yy===m&&x.sales_mode===mode);return r?r.customers:0;}),
+    borderColor:MODE_COLORS[MODES.indexOf(mode)],backgroundColor:'transparent',tension:0.4,pointRadius:4
+  }));
+  const revDatasets=filteredModes.map((mode,i)=>({
+    label:mode,
+    data:MONTHS.map(m=>{const r=D.mode_monthly.find(x=>x.mmm_yy===m&&x.sales_mode===mode);return r?r.revenue:0;}),
+    borderColor:MODE_COLORS[MODES.indexOf(mode)],backgroundColor:'transparent',tension:0.4,pointRadius:4
+  }));
+
+  dc('sCustTrend');
+  charts['sCustTrend']=new Chart(document.getElementById('s-cust-trend'),{
+    type:'line',data:{labels:MONTH_LABELS,datasets:custDatasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
+  });
+
+  dc('sRevTrend');
+  charts['sRevTrend']=new Chart(document.getElementById('s-rev-trend'),{
+    type:'line',data:{labels:MONTH_LABELS,datasets:revDatasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{callback:v=>'₹'+fmt(v),font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
+  });
+}
+
+// ══════════════ AGE GROUP ══════════════
+function renderAge(){
+  const mf=document.getElementById('a-month').value;
+  const pf=document.getElementById('a-policy').value;
+
+  const totalSett=D.sett_by_age.reduce((a,b)=>a+b.est_amt,0);
+  const totalRev=989252849;
+
+  document.getElementById('a-kpis').innerHTML=`
+    <div class="kpi"><div class="lbl">Total Revenue</div><div class="val">₹${fmt(totalRev)}</div><div class="sub">All age groups</div></div>
+    <div class="kpi" style="border-left-color:#c0392b"><div class="lbl">Settlement Amount</div><div class="val">₹${fmt(totalSett)}</div><div class="sub">Estimated total</div></div>
+    <div class="kpi" style="border-left-color:#2e7d32"><div class="lbl">Highest Risk Group</div><div class="val">65+</div><div class="sub">₹${fmt(D.sett_by_age[5].est_amt)} est. settlement</div></div>
+  `;
+
+  // Settlement table
+  document.getElementById('a-sett-table').innerHTML=`
+    <thead><tr><th>Age Group</th><th>Est Settlement %</th><th>Est Settlement Amt</th></tr></thead>
+    <tbody>${D.sett_by_age.map(s=>`<tr><td><strong>${s.age_group}</strong></td><td>${s.settlement_pct}%</td><td>₹${fmt(s.est_amt)}</td></tr>`).join('')}<tr style="font-weight:700"><td>Total</td><td>—</td><td>₹${fmt(totalSett)}</td></tr></tbody>
+  `;
+
+  // Customers by age bar
+  let custByAge=AGE_GROUPS.map(ag=>{
+    let data=D.age_monthly;
+    if(mf!=='all') data=data.filter(x=>x.mmm_yy===mf);
+    return {age_group:ag,customers:data.filter(x=>x.age_group===ag).reduce((a,b)=>a+b.customers,0)};
+  });
+
+  dc('aCustBar');
+  charts['aCustBar']=new Chart(document.getElementById('a-cust-bar'),{
+    type:'bar',
+    data:{labels:AGE_GROUPS,datasets:[{data:custByAge.map(x=>x.customers),backgroundColor:COLORS,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}}}}}
+  });
+
+  // Trend by age
+  const ageDatasets=AGE_GROUPS.map((ag,i)=>({
+    label:ag,
+    data:MONTHS.map(m=>{
+      const r=D.age_monthly.find(x=>x.mmm_yy===m&&x.age_group===ag);
+      return r?r.customers:0;
+    }),
+    borderColor:COLORS[i],backgroundColor:'transparent',tension:0.4,pointRadius:3
+  }));
+
+  dc('aTrend');
+  charts['aTrend']=new Chart(document.getElementById('a-trend-chart'),{
+    type:'line',data:{labels:MONTH_LABELS,datasets:ageDatasets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6,boxWidth:10}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
+  });
+
+  // Age x Mode matrix
+  const modeHeaders=MODES.map(m=>m.split('-')[1]);
+  document.getElementById('a-mode-table').innerHTML=`
+    <thead><tr><th>Age Group</th>${MODES.map(m=>`<th>${m}</th>`).join('')}<th>Total</th></tr></thead>
+    <tbody>${AGE_GROUPS.map(ag=>{
+      const row=MODES.map(mode=>{const r=D.age_mode.find(x=>x.age_group===ag&&x.sales_mode===mode);return r?r.customers:0;});
+      const total=row.reduce((a,b)=>a+b,0);
+      return `<tr><td><strong>${ag}</strong></td>${row.map(v=>`<td>${v.toLocaleString()}</td>`).join('')}<td><strong>${total.toLocaleString()}</strong></td></tr>`;
+    }).join('')}</tbody>
+  `;
+
+  // Age x Policy matrix
+  const policies=['POL1048HEL','POL2005HEL','POL3309HEL','POL4321HEL','POL4331HEL','POL5319HEL','POL6093HEL','POL6303HEL','POL9221HEL'];
+  const filteredPolicies=pf==='all'?policies:[pf];
+  document.getElementById('a-policy-table').innerHTML=`
+    <thead><tr><th>Policy ID</th>${AGE_GROUPS.map(ag=>`<th>${ag}</th>`).join('')}<th>Total</th></tr></thead>
+    <tbody>${filteredPolicies.map(pid=>{
+      const row=AGE_GROUPS.map(ag=>{const r=D.age_policy.find(x=>x.age_group===ag&&x.policy_id===pid);return r?r.customers:0;});
+      const total=row.reduce((a,b)=>a+b,0);
+      return `<tr><td><strong>${pid}</strong></td>${row.map(v=>`<td>${v.toLocaleString()}</td>`).join('')}<td><strong>${total.toLocaleString()}</strong></td></tr>`;
+    }).join('')}</tbody>
+  `;
+}
+
+// Init
+renderGeneral();
+</script>
+</body>
+</html>
